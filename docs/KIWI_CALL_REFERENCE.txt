@@ -1,0 +1,1008 @@
+# Cause of Death: native call and behavior reference for RenPy conversion
+
+Revision: 2026-09-12. This supersedes the syscall descriptions and runtime-status claims in the earlier CLAUDE_HANDOFF.md and PRESENTATION_CUE_FINDINGS.md. Project: outputs/cod-replica-lab. The older outputs/cod-web-lab remains a preserved milestone.
+
+## Scope and evidence
+
+This is a source-derived behavioral reconstruction of the supplied iPhone CoD 1.3.4 ARMv7 executable, plus static analysis of 103 expansion containers. It is not a claim of complete 1:1 equivalence. All 100 syscall dispatch slots are accounted for, including native defaults; later corpus call100 is separately documented. Static parsing covers 420 script instances / 368 unique SHA-256 scripts, with no parser errors. Passing replica tests and reaching dialogue are not original-device differential validation.
+
+Descriptive call names below are ours. IDs, native handler addresses, native function names and data-flow observations are evidence; uncertain semantics are explicitly labeled. Ghidra mangles several C++ by-value CSString signatures: trust verified register/stack argument order rather than its displayed prototype. Every row includes observed static invocation counts and argument counts. Counts include duplicate scripts; an unobserved syscall may still matter in bundled scripts or unexamined versions.
+
+Evidence files in outputs/native-evidence retain disassembly/decompilation excerpts and recovered functions. Inputs remain in the user's Desktop/Decompile folder. No original native app execution or fresh SHS differential playback was completed during this pass.
+
+## Calling convention and strings
+
+Cells and ordinary registers hold 16-bit values. Use signed16 for native numeric parameters, retaining unsigned16 bit patterns for addresses/serialization. Raw opcode0x1f embeds syscallID in high operand byte and argc in low byte; raw0x1e uses its operand as ID and current SYS as argc. Arguments are stack[SP-argc] through stack[SP-1], in that order (a0 first). Return removes argc cells and sets SYS to low16 result. Blocking calls keep args and pending argc until UI completion. Native no-result sentinel0x80000000 ultimately produces low16 zero when not blocked.
+
+VM strings pack high byte then low byte in each short, NUL terminated. Native readBufferString(0x36f04) special-cases exactly signed pointer -1 to empty string (literal0x101420). Other negative pointers are not empty-string sentinels. Positive pointers0x7ff5..0x7ffe address ten host CSString slots;0x7fff overlaps scratch storage. Native does not reliably bounds-check invalid string selectors. Replica decodes Windows-1252; exact native encoding and non-ASCII casing/entry remain unverified. Helpers 6/47 select slot by complement of a negative selector; helper0 instead selects 1-selector. Do not unify these formulas.
+
+Named substitutions and speaker names should remain dynamic until presentation. Preserve raw strings alongside rendered strings when converting so player-name substitution works after load/rollback. Current replacement loop is bounded and diagnoses cycles; unusual replacement ordering needs native comparison.
+
+## Scheduler and durable state
+
+Entry is resource25001 (0x61a9) in the supplied corpus. Run initialization before narrative modules: it installs entity names, portraits and properties. Queued scripts are LIFO after halt. queueScript09's Boolean suppresses default dialogue creation; it is not a library flag. Mutable state spans scripts: names, replacements, integer properties/arrays, portrait definitions, expressions, speakers, pending audio and UI. Starting a new VM does not mean resetting the story world.
+
+Keep dialogue UI as a persistent underlying object and menus/cards/input as transient layers. Call13/65 with absent dialogue does not wait. Generic UI completion returns zero; menu results and text-entry results have separate contracts. Frame stack uses1024 cells, address base0x7bf5; popped cells retain their native memory contents. The replica diagnoses uninitialized or out-of-range access rather than inventing zero. Optional library ownership remains incomplete. Parser reserves secondary cells as zero, but native initialization of that region still needs confirmation.
+
+## Every syscall
+
+Arguments below are zero-based positional order. A missing native side effect is not permission to infer a replacement behavior. Host-dependent calls can be adapted explicitly in RenPy, with any behavior change recorded.
+
+### 0 — format_host_string
+
+Arguments: `format, substitutions… OR negativeSelector, format, substitutions…`. Return: **host-string pointer**. Native target: `0x384a0`.
+
+Formats %c, %d, %s via my_sprintf2(false). Nonnegative first argument selects slot 0; negative first argument selects slot 1 - signed(a0), with format in a1. Unlike calls 6/47, this selector is not bitwise complement. Native ten persistent string slots plus scratch; malformed selectors are unsafe. Current format scanner is approximate for unsupported percent sequences.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 7455 sites; observed argc: 1, 2, 3, 4.
+
+### 1 — menu
+
+Arguments: `title, pipeChoices, prompt, duration, defaultIndex, portrait, portraitSide, style`. Return: **WAIT → selected index**. Native target: `0x387c6`.
+
+Pipe-delimited choices, optional prompt if nonnegative pointer. Positive duration enables timer. portrait -2 resolves native default portrait. a7 reaches native menu initializer; exact style interpretation still needs tracing. Runtime models choices, default and timer; portrait/style rendering is pending.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 3790 sites; observed argc: 8.
+
+### 2 — begin_custom_menu
+
+Arguments: `title, prompt, duration, defaultIndex, portrait, portraitSide`. Return: **0**. Native target: `0x38fde`.
+
+Creates type-3 text menu; does not yet block. Subsequent call 3 adds items and call 4 runs it.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 166 sites; observed argc: 6.
+
+### 3 — add_menu_item
+
+Arguments: `text, returnValue, enabled`. Return: **0**. Native target: `0x39084`.
+
+Append item. Return value -999 (0xfc19) means current insertion index. Enabled iff a2 != 0. Preserve numeric return values separately from displayed position.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 5571 sites; observed argc: 3.
+
+### 4 — run_custom_menu
+
+Arguments: `randomize`. Return: **WAIT → mapped value**. Native target: `0x390da`.
+
+If a0 != 0, for every i from 0 through count-1 swap i with rand()%count. This is not Fisher-Yates. Captions, enabled state and result mapping move together. Timeout uses default index; invalid defaults remain an edge case.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 166 sites; observed argc: 1.
+
+### 5 — persist_expression
+
+Arguments: `entity, expression`. Return: **0**. Native target: `0x3923c`.
+
+Stores expression as a native signed byte. Used as default by call 13; exact interaction with last-expression cache is separate from explicit speaker expression.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 6 — get_entity_name
+
+Arguments: `entity, destination`. Return: **destination or host-string pointer**. Native target: `0x3912c`.
+
+Copies entity name into VM destination if destination >= 0. Negative destination selects host string slot ~signed(destination); returns 0x7ff5 + slot.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 7 — end_game
+
+Arguments: `(none)`. Return: **0 / game ends**. Native target: `0x38fc8`.
+
+Calls GameModel::endGame (reset then engine end). Alias 63. Replica clears queue/properties/arrays and ends; full native reset and surrounding app navigation remain incomplete.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 185 sites; observed argc: 3.
+
+### 8 — chapter_or_image_card
+
+Arguments: `title, text, imageId, parameter`. Return: **WAIT → 0**. Native target: `0x39738`.
+
+Creates SHSUIChapterScreen (UI type 16). Negative title omits title; text -1 is empty. a2 can be an expansion image, including character-file full-page images. a3 passed to initChapterScreen; do not interpret a2/a3 as the normal location pair. See chapter-card evidence.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 374 sites; observed argc: 4.
+
+### 9 — download_poll
+
+Arguments: `arguments consumed by getPollURL`. Return: **WAIT → asynchronous completion**. Native target: `0x391b4`.
+
+Builds poll URL, hides dialogue layers, calls GameModel::setDownloading. Network protocol and completion result unresolved; replica requires explicit hostCall adapter and does not issue requests.
+
+Replica: documented; explicit external host adapter required. Static corpus: 0 sites; observed argc: none.
+
+### 10 — queue_script
+
+Arguments: `scriptResourceId, skipDefaultDialog`. Return: **0**. Native target: `0x39216`.
+
+Appends a queued script. Scheduler consumes last queued entry first after halt. Boolean controls automatic SHSUIDialog creation, NOT library loading.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 1536 sites; observed argc: 2.
+
+### 11 — set_dialog_location
+
+Arguments: `variant, baseResourceId`. Return: **0**. Native target: `0x394be`.
+
+Calls dialog.setLocation(a1,a0). Each -2 field keeps previous value independently. Background selection/fallback described below.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 12 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 13 — say
+
+Arguments: `text, entity, optionalExpression OR negativeStyle, text, entity, optionalExpression`. Return: **WAIT → 0; no dialog → 0**. Native target: `0x3925a`.
+
+Negative a0 shifts remaining arguments by one. -2 wraps text in parentheses; -3 wraps in backticks; other negative style has no wrapper. Defaults expression to persisted entity expression; explicit -1 also means persisted. Native casts selected expression to signed byte before setting speaker. Sets text, animates, blocks.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 91520 sites; observed argc: 2, 3, 4.
+
+### 14 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 15 — titled_dialogue
+
+Arguments: `title, text`. Return: **WAIT → 0**. Native target: `0x39412`.
+
+Sets dialogue speaker type 3, title and text using replacement-aware strings, animates, blocks. Alias 76.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 1206 sites; observed argc: 4.
+
+### 16 — queue_ui_transition
+
+Arguments: `value`. Return: **0**. Native target: `0x394ae`.
+
+Queues a transition style in GameModel+0x1c20 (0x394ae..0x394ba). SHSUIElement::finishUI (0x3e4d0) consumes it via setupQueuedFade (0x11008) on UI dismissal. restartFade (0x103b8) copies it to +0x1c30 and clears the queue. Style 6 selects doFadeToBlack_Animation; 1 selects doHBlind_Animation; 2 selects doVBlind_Animation. Style 20 chooses 1 or 2 using native random parity; 0 cancels a queued transition. Selector mapping resolved from startFadeOutAnimation at 0x60760 (selector slots 0x165a04/08/0c). Black fade animation duration is 1.5 seconds per half. Volume 5 Chapter 1 queues 16(6) on "You are dead." and transitions to "You are now Detective Mal Fallon." after dismissal. RenPy renders style 6 with Fade(1.5, 0, 1.5), including incoming UI. Exact Core Animation opacity keyframes/easing and blinds styles remain unreplicated. Other styles are retained as events, not silently substituted with black fades.
+
+Replica: RenPy: deferred black fade rendered; blinds/easing partial. Web replica: metadata only. Static corpus: 1977 sites; observed argc: 1.
+
+### 17 — text_entry
+
+Arguments: `title, prompt, initialText`. Return: **WAIT → host string pointer**. Native target: `0x38916`.
+
+Creates UI type 15; alias 40. Native max length 20. On completion stores event text and host slot 0 and returns 0x7ff5. Byte/Unicode edit behavior is not yet independently replicated.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 18 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 420 sites; observed argc: 0.
+
+### 19 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 20 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 21 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 22 — format_memory
+
+Arguments: `destination, format, substitutions…`. Return: **0**. Native target: `0x3848e`.
+
+Legacy my_sprintf supports %d/%s and writes packed VM string. Empty format does not overwrite destination. Unsupported % handling not fully reproduced by current regex implementation.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 23 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 24 — string_equal
+
+Arguments: `leftString, rightString`. Return: **1 if equal else 0**. Native target: `0x384b6`.
+
+my_streq compares strings. No name replacement inferred.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 173 sites; observed argc: 2.
+
+### 25 — concat_memory
+
+Arguments: `destination, suffixString`. Return: **0**. Native target: `0x384ca`.
+
+my_strcat reads current destination and suffix, then overwrites destination with concatenation. Caller owns sufficient mutable memory.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 26 — parse_integer_discarded
+
+Arguments: `string`. Return: **0**. Native target: `0x384dc`.
+
+Calls my_atoi but dispatcher discards computed value. Returning parsed integer would differ from this executable.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 27 — random_below
+
+Arguments: `bound`. Return: **nonnegative remainder**. Native target: `0x384ee`.
+
+CSEngine::rand wraps arc4random with signed absolute value; dispatcher takes signed remainder then absolute value. Bound zero returns zero in dispatcher. Negative/INT_MIN edges deserve ARM-specific verification.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 146 sites; observed argc: 1.
+
+### 28 — copy_event_text
+
+Arguments: `destination`. Return: **0**. Native target: `0x38516`.
+
+Writes previously collected event text to VM memory. Argument is destination, not source.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 48 sites; observed argc: 1.
+
+### 29 — get_event_result
+
+Arguments: `index`. Return: **signed short result**. Native target: `0x3853a`.
+
+Reads one of 10 event result slots. Native missing bounds checks are not safe behavior to imitate; replica diagnoses invalid indices.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 30 — engine_virtual_0x98
+
+Arguments: `value`. Return: **0**. Native target: `0x3854a`.
+
+Invokes CSEngine-related virtual method at vtable offset 0x98 with signed a0. Exact platform operation not resolved; explicit hostCall adapter required.
+
+Replica: documented; explicit external host adapter required. Static corpus: 0 sites; observed argc: none.
+
+### 31 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 32 — register_master_range
+
+Arguments: `startId, count, field2, field3`. Return: **0**. Native target: `0x38560`.
+
+GameModel::addMaster appends four shorts: startId, startId+count-1, a2, a3; increments master count. Downstream use of last two fields unresolved. Explicit host adapter required in current replica.
+
+Replica: documented; explicit external host adapter required. Static corpus: 0 sites; observed argc: none.
+
+### 33 — form
+
+Arguments: `title, text, parameter`. Return: **WAIT → generic result**. Native target: `0x38598`.
+
+Creates SHSUIForm and adds UI. Text/form display is represented by a simple continuation; specialized widget behavior pending.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 185 sites; observed argc: 3.
+
+### 34 — ensure_dialog
+
+Arguments: `variant, baseResourceId`. Return: **0**. Native target: `0x3862e`.
+
+If no dialogue exists, creates one and sets location(a1,a0). If already present, does nothing.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 35 — speaker_and_location
+
+Arguments: `entity, variant, baseResourceId, expression`. Return: **0**. Native target: `0x3869e`.
+
+Sets speaker(a0,a3), then dialog location(a2,a1). Expression is explicit, not call-13 persisted-default logic.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 8596 sites; observed argc: 4.
+
+### 36 — set_dialog_title
+
+Arguments: `title`. Return: **0**. Native target: `0x386f6`.
+
+Updates existing dialogue title; no automatic wait.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 37 — set_dialog_text
+
+Arguments: `text`. Return: **WAIT → 0**. Native target: `0x38734`.
+
+Sets dialogue text and animates; marks script blocked.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 38 — status_icons
+
+Arguments: `value0, value1`. Return: **0**. Native target: `0x38788`.
+
+Calls dialog.setStatusIcons(a0,a1,false,-1,-1,-1,-1). Exact icon meaning/layout unresolved; raw cue retained.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 39 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 40 — text_entry_alias
+
+Arguments: `title, prompt, initialText`. Return: **WAIT → host string pointer**. Native target: `0x38916`.
+
+Same native target as 17.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 48 sites; observed argc: 3.
+
+### 41 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 42 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 43 — set_user_replacement
+
+Arguments: `text`. Return: **0**. Native target: `0x38a6a`.
+
+Assigns replacement for literal key $USR.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 44 — set_global_integer
+
+Arguments: `property, value`. Return: **0**. Native target: `0x38aae`.
+
+Entity 0 integer property setter; alias 54.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 7259 sites; observed argc: 2.
+
+### 45 — get_global_integer
+
+Arguments: `property`. Return: **integer low 16 bits**. Native target: `0x38ad0`.
+
+Entity 0 integer property getter; alias 55. Absent property returns 0.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 6232 sites; observed argc: 1.
+
+### 46 — set_replacement
+
+Arguments: `key, replacement`. Return: **0**. Native target: `0x3892c`.
+
+Sets entity-table string replacement. Native substitution processing happens in replacement-aware string/dialog operations.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 85 sites; observed argc: 2.
+
+### 47 — get_or_default_replacement
+
+Arguments: `key, defaultText, negativeSlotSelector`. Return: **host-string pointer**. Native target: `0x3896e`.
+
+Uses existing nonempty replacement, otherwise installs default and saves options. Host slot ~signed(a2). Replica retains in session/snapshot; original options-file persistence is not implemented.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 32 sites; observed argc: 3.
+
+### 48 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 49 — set_entity_name
+
+Arguments: `entity, name, titleCase`. Return: **0**. Native target: `0x38b26`.
+
+Assigns name; if a2 nonzero and name does not begin $, applies native title casing. Current JS casing is approximate for non-ASCII and unusual word separators.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 103 sites; observed argc: 3.
+
+### 50 — set_flag
+
+Arguments: `entity, property, bit, value`. Return: **0**. Native target: `0x38c82`.
+
+Set bit only if a3 == 1; otherwise clear. ARM register shift uses low 8 bits of shift amount, >=32 gives zero mask; do not use bare JavaScript modulo-32 shift.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 51 — get_flag
+
+Arguments: `entity, property, bit`. Return: **0 or 1**. Native target: `0x38cba`.
+
+Tests same mask rules as 50.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 52 — set_entity_integer
+
+Arguments: `entity, property, value`. Return: **0**. Native target: `0x38ce8`.
+
+Stores signed short argument in native integer map keyed by entity/property.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 206 sites; observed argc: 3.
+
+### 53 — get_entity_integer
+
+Arguments: `entity, property`. Return: **integer low 16 bits**. Native target: `0x38d0e`.
+
+Gets property, default 0. Native storage is 32-bit although VM return is 16-bit.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 54 — set_global_integer_alias
+
+Arguments: `property, value`. Return: **0**. Native target: `0x38aae`.
+
+Alias 44.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 55 — get_global_integer_alias
+
+Arguments: `property`. Return: **integer low 16 bits**. Native target: `0x38ad0`.
+
+Alias 45.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 56 — append_integer_array
+
+Arguments: `entity, property, value`. Return: **0**. Native target: `0x38d28`.
+
+Append signed short promoted to native int to keyed vector.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 57 — get_integer_array_item
+
+Arguments: `entity, property, index`. Return: **integer low 16 bits**. Native target: `0x38d54`.
+
+Get vector element. Missing array or out-of-bounds is invalid native access; replica diagnoses.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 58 — integer_array_length
+
+Arguments: `entity, property`. Return: **count low 16 bits**. Native target: `0x38d82`.
+
+Absent array returns zero.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 59 — remove_integer_array_item
+
+Arguments: `entity, property, index`. Return: **0**. Native target: `0x38da4`.
+
+Calls array virtual method +0x20 with a2. Vtable0x169e28 resolves to CSVectorT<int>::removeAtIndex at0x32f20 (Thumb pointer0x32f21). Shifts subsequent values left and decreases count; dispatcher discards removed value.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 60 — find_registered_name
+
+Arguments: `name`. Return: **index or -1**. Native target: `0x38dd0`.
+
+Searches 200 registered names for match. Separate from arbitrary replacement key lookup.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 61 — copy_entity_name
+
+Arguments: `entity, destination`. Return: **0**. Native target: `0x38e04`.
+
+Copies name into VM memory. Unlike 6 it does not support returning selected host slot.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 62 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 63 — end_game_alias
+
+Arguments: `(none)`. Return: **0 / game ends**. Native target: `0x38fc8`.
+
+Alias 7.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 64 — set_entity_name_raw
+
+Arguments: `entity, name`. Return: **0**. Native target: `0x38e4e`.
+
+Assigns name without call-49 optional casing.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 65 — say_explicit
+
+Arguments: `entity, text, expression`. Return: **WAIT → 0; no dialog → 0**. Native target: `0x38e7a`.
+
+Sets current speaker, text, animates. If dialogue absent native returns without blocking.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 50142 sites; observed argc: 3.
+
+### 66 — weighted_random
+
+Arguments: `weight0, weight1, …`. Return: **selected index**. Native target: `0x38482`.
+
+Sum all signed weights, draw rand()%sum, return first cumulative total exceeding draw; final fallback argc-1. Replica rejects negative weights/nonpositive total instead of reproducing unsafe division.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 67 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 68 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 69 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 70 — platform_query
+
+Arguments: `selector`. Return: **selector-dependent**. Native target: `0x38f52`.
+
+2→2; 3→6; 6→app version string in host slot0 (pointer0x7ff5); 9→1; 10→2 if store available else1; otherwise0. Current appVersion defaults1.3.4; storeAvailable configurable.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 71 — action_menu
+
+Arguments: `title, prompt, goodPipePool, badPipePool, duration, portrait, portraitSide, roundPeriod`. Return: **WAIT → accumulated score**. Native target: `0x3950c`.
+
+Four-choice timed minigame. Correct answers +1, incorrect -1 with score floor0. Click changes round without returning to VM. Full selection/shuffle contract below. Animation gaps and roundPeriod effect remain incomplete.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 21 sites; observed argc: 8.
+
+### 72 — set_portrait
+
+Arguments: `entity, baseResourceId`. Return: **0**. Native target: `0x38aec`.
+
+Builds five expression images: base+i if resource exists, otherwise base. Nonpositive base propagated. Uses resource manager selected by base.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 145 sites; observed argc: 2.
+
+### 73 — get_portrait
+
+Arguments: `entity`. Return: **base portrait short**. Native target: `0x38b0c`.
+
+Returns stored base portrait from entity table.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 42 sites; observed argc: 1.
+
+### 74 — set_primary_speaker
+
+Arguments: `entity`. Return: **0**. Native target: `0x394ec`.
+
+Sets primary speaker used by dialogue layout/alignment.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 2124 sites; observed argc: 1.
+
+### 75 — set_event_speaker
+
+Arguments: `entity`. Return: **0**. Native target: `0x394fc`.
+
+Sets event/narration speaker; narration suppresses ordinary speaker-name presentation.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 103 sites; observed argc: 1.
+
+### 76 — titled_dialogue_alias
+
+Arguments: `title, text`. Return: **WAIT → 0**. Native target: `0x395f0`.
+
+Same behavior as 15.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 77 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 78 — portrait_selector
+
+Arguments: `title, count, resourceListPointer`. Return: **WAIT → selected index**. Native target: `0x3965e`.
+
+Reads count resource shorts from VM memory, creates portrait selector with fixed true flag. Native result is list index, not resource ID; sets event result0.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 6 sites; observed argc: 3.
+
+### 79 — queue_audio
+
+Arguments: `resourceId`. Return: **0**. Native target: `0x3967a`.
+
+8201..8209 → music queue with false flag; all other IDs → sound queue. Native single pending slot for each class: later call overwrites earlier before flush.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 5462 sites; observed argc: 1.
+
+### 80 — queue_music
+
+Arguments: `resourceId, flag`. Return: **0**. Native target: `0x396b0`.
+
+Set pending music ID and Boolean forwarded to sound manager. The Objective-C selector is setLoop: (selector slot0x1657b8, string0xf13d1), confirming Boolean loop semantics.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 3851 sites; observed argc: 2.
+
+### 81 — stop_music
+
+Arguments: `fadeDuration`. Return: **0**. Native target: `0x396d4`.
+
+Argument is duration, NOT music ID. Zero immediate; -1 selects 1000; other value passed to fading. Clears queued music. Current events use fadeMs based on numeric convention; tick unit provenance still needs final verification.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 2395 sites; observed argc: 1.
+
+### 82 — vibrate
+
+Arguments: `(none)`. Return: **0**. Native target: `0x39720`.
+
+Device vibration cue. Replica emits event only.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 690 sites; observed argc: 0.
+
+### 83 — pause_music
+
+Arguments: `(none)`. Return: **0**. Native target: `0x396f0`.
+
+Sound-manager pause cue. Replica emits event only.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 84 — resume_music
+
+Arguments: `(none)`. Return: **0**. Native target: `0x39708`.
+
+Sound-manager resume cue. Replica emits event only.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 85 — location_wipe
+
+Arguments: `(none)`. Return: **0**. Native target: `0x39742`.
+
+Native GameModel::locationWipe body is empty in supplied binary. Do not invent a transition for this call.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 86 — set_location_wipe_option
+
+Arguments: `baseResourceId, variant, wipeFlag`. Return: **0**. Native target: `0x397f8`.
+
+If a2 == 0 disables next location wipe, then sets location(a0,a1). Normal location order differs from 11/34. Wipe flag metadata is not yet replicated.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 87 — model_query_0x260
+
+Arguments: `(none)`. Return: **field low16**. Native target: `0x3985a`.
+
+Reads GameModel+0x260 integer; field meaning unresolved. Explicit host adapter required.
+
+Replica: documented; explicit external host adapter required. Static corpus: 0 sites; observed argc: none.
+
+### 88 — dialog_auxiliary_text
+
+Arguments: `text`. Return: **0**. Native target: `0x39866`.
+
+Writes replacement-aware string to active dialogue+0xf0. Exact displayed role unresolved; exported as named auxiliary-text cue.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 1617 sites; observed argc: 1.
+
+### 89 — set_model_flag_0x400
+
+Arguments: `(none)`. Return: **0**. Native target: `0x39756`.
+
+Writes byte1 at GameModel+0x400. Semantic purpose unresolved, raw cue retained.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 1769 sites; observed argc: 0.
+
+### 90 — schedule_caption
+
+Arguments: `captionId, optionalText`. Return: **0**. Native target: `0x39768`.
+
+Calls displayScheduleCaption(a0,text); a1 -1 supplies empty string; otherwise name replacement applied. Scheduling/layout semantics pending.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 91 — show_loading
+
+Arguments: `block`. Return: **0 or WAIT**. Native target: `0x398ce`.
+
+Shows localized loading bar using engine text resources28 and32. Sets script field0x118. Nonzero a0 also sets block flag0x84; replica provides explicitly completed loading wait.
+
+Replica: source-derived; implementation partial where noted. Static corpus: 0 sites; observed argc: none.
+
+### 92 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 93 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 94 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 95 — model_query_selected_field
+
+Arguments: `selector`. Return: **field low16**. Native target: `0x39954`.
+
+ARM instructions0x39954..0x3996e: a0==1 reads GameModel+0x1c14, otherwise GameModel+0x1c18. Semantic field names remain unresolved. Explicit host adapter required.
+
+Replica: documented; explicit external host adapter required. Static corpus: 0 sites; observed argc: none.
+
+### 96 — native_default
+
+Arguments: `ignored`. Return: **0**. Native target: `0x39996`.
+
+This slot targets native default path0x39996. No host side effect in supplied executable; arguments still consumed.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 0 sites; observed argc: none.
+
+### 97 — set_location_pan
+
+Arguments: `enabled, alignment`. Return: **0**. Native target: `0x398a6`.
+
+Sets pan Boolean and location alignment. Speaker state affects alignment modes1/3. Current replica emits state/event; interpolation/cropping not implemented.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 98 — hide_loading
+
+Arguments: `(none)`. Return: **0**. Native target: `0x39940`.
+
+Calls engine.hideLoadingBar. Does not itself supply the asynchronous return of a previously suspended call91.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 0 sites; observed argc: none.
+
+### 99 — show_full_page_ad
+
+Arguments: `flag`. Return: **0**. Native target: `0x39978`.
+
+Calls engine.showFullPageAd(a0!=0). Replica records cue only, with no ad/network request.
+
+Replica: cue/state captured; visual/device effect not rendered. Static corpus: 821 sites; observed argc: 1.
+
+### 100 — out_of_range_in_1_3_4
+
+Arguments: `opaque arguments`. Return: **0 in this native version**. Native target: `out-of-range default`.
+
+Observed in supplied later script corpus, but dispatcher only handles0..99. This executable falls through to default. Possible newer-engine semantic must be checked against a newer binary or SHS; native default is not proof the call is universally inert.
+
+Replica: native default reproduced; version caveat for100. Static corpus: 4 sites; observed argc: 2.
+
+## Media/resource behavior
+
+Resource scope is selected by SHSEngine::getResMgr: signed ID >=26000 uses current expansion; lower IDs use bundled resources. This threshold is distinct from the script IDs25000..25999. Extracted expansion files use hexadecimal names asset_6590.jpg; original bundle res_generated names are decimal with no extension. Identify content by signature. Keep a manifest for both scopes; missing expression/background variants must fall back based on actual resource existence, not on a guessed naming pattern.
+
+Portraits: call72 registers base through base+4, each absent variant falls back to base. Speaker expression selection clamps negatives to0 at the speaker layer and indexes modulo5; last/persisted expression caches are not interchangeable. Keep entity, expression and resolved resource ID in exported traces. Primary/event speakers affect layout/narration. Current portrait event includes narration state; exact original alignment and animation interpolation remain unfinished.
+
+Locations: dialog.setLocation(base,variant) consumes -2 as KEEP independently for each field. GameModel::setLocationImageID returns without change for negative base; normal variant1 uses base+1,2 uses base+2, other variants use base. Missing candidate falls back to base. A direct GameModel call with variant-2 has time-dependent logic around thresholds1080/1200, but the ordinary dialogue call consumes -2 first. Do not apply the direct time-of-day rule to the script-facing KEEP sentinel. Wipe function0x10260 is empty. Pan/alignment call97 still matters independently.
+
+Image cards: call8 constructs SHSUIChapterScreen, storing title/text and two resource/parameter shorts at+0x80/+0x82. It is a transient screen, not dialogue text plus an ordinary background change. Secret Files uses both title and text=-1 with expansion artwork in a2. Browser shows that artwork as a card. Precise compositing of a3 is not recovered; native C++ render stub is empty, suggesting presentation elsewhere (Objective-C/widget path).
+
+Audio: GameModel::tick09Expansion calls runScript09 before handleQueuedAudio. Each pending slot holds only the latest request; flush sound first, music second, then clear. Sound manager accepts built-in effects8001..8006 and expansion>=26000, and built-in music8201..8209 and expansion>=26000. Enabled/volume flags can suppress playback. Re-requesting currently selected music updates looping and cancels fade rather than unconditionally restarting. Switching tracks may defer new playback until fade completes; the bare-bones adapter does not reproduce that precise scheduling. stopMusic(-1) selects duration1000 and clears pending music. Calls83/84 pause/resume,82 vibrates. Original files are retained; nothing is regenerated.
+
+LocalMediaAdapter is deliberately separate from native-effects.js: browser rendering, HTMLAudioElement playback and approximate millisecond fade are implementation choices. It displays original JPEG/PNG/GIF assets and plays recognized MP3 assets selected locally. It does not implement every original codec, title-card composition, device vibration, crop/pan animation, volume settings, track positions in saves, or original UIKit behavior. Loading only .kiw scripts cannot resolve actual image fallback correctly; supply manifests/assets. No browser-side LZMA extraction yet: run the Python extractor first.
+
+## Menu timing and action minigame
+
+Native menu initializes remaining/initial duration as floats converted from signed integer duration. On tick, subtract delta; timeout fires only when remaining <0 and initial >0 and no pending selection. Exact real-time unit conversion and selection/animation boundary need original playback comparison. Browser offers explicit advancement in native units, so readers can exercise timeout branches without claiming wall-clock parity.
+
+Action-menu reset draws one good item, one bad, and a different second bad. Coin arc4random()&1: even draws a different second good; odd draws a third distinct bad. Initial scores are [+1,-1,-1,+1 or -1]. Shuffle with exactly20 swaps, each choosing two indices from separate arc4random()&3 draws. Clicking clamps accumulated score to at least0; it does not return to VM. Timeout returns accumulated score. Native flies old choices off and schedules new choices through NSTimer; current replica regenerates immediately. RoundPeriod and disabled-input window remain incomplete. The replica requires at least2 good and3 bad entries, preventing native infinite distinct-draw loops for malformed pools.
+
+Randomness: CSEngine::rand resolves to arc4random at import stub0xee0f8, followed by signed absolute-value logic. Minigame uses unsigned arc4random directly. Do not substitute an assumed libc seed. Replica records cryptographic random words in a tape and saves cursor/tape; exported traces can supply the tape for repeatability. The corpus exploration tool uses an explicitly synthetic fixed RNG, only for reproducible coverage. Save replay is deterministic only over already recorded words; exhausting a stored tape can draw new entropy.
+
+## VM binary format and complete opcode table
+
+CSPUD starts with 5 ASCII bytes, then big-endian u32 resource count. Each index entry is big-endian u16 resource ID and u32 record offset. Each record has compressed size at+0, raw size at+4, an as-yet uninterpreted field at+8, and payload at+12. If compressed==raw the extractor copies bytes; otherwise decode LZMA1 using the first property byte and little-endian dictionary size in a13-byte header, with compressed stream after that header. Verify raw output length. tools/unpack_exp.py preserves resource content after decompression.
+
+Kiwi starts with ASCII kiwi, one-byte version, for version>1 a library-present Boolean and optional two big-endian shorts, then external-instruction-set flag. Next four big-endian u16: primary, secondary, tertiary, instruction count. Serialized data contains primary+tertiary shorts; memory reserves primary+secondary+tertiary with secondary gap between primary and tertiary. Then instructions: raw opcode byte, optionally big-endian u16 operand. Always operand for raw01,40,41,5c. Within19..2e use mask0x003f84e7 at bit(raw-0x19). Never allow JavaScript shifts to wrap the mask outside that interval. Header library/external instruction-set support is incomplete; do not assume every Kiwi variation is supported.
+
+Instruction pointer below is decoded instruction index, not byte offset. Let i be the index of the current instruction before execution. Ordinary next IP is i+1. Arithmetic outputs wrap to16 bits. For two-stack-value operations, a is preceding/lower cell, b is top cell. Binary operations pop both and push result. Relative jump target is i+signed16(operand). All98 in-range raw opcode slots follow; out-of-range0 or>0x62 falls through in this executable.
+
+| Raw | Operand | Native handler | Operation |
+| --- | --- | --- | --- |
+| 0x01 | u16 BE | 0xe436 | PRI=operand |
+| 0x02 | none | 0xe852 | native default / no operation |
+| 0x03 | none | 0xe42a | PRI=pop() |
+| 0x04 | none | 0xe444 | ALT=pop() |
+| 0x05 | none | 0xe43e | PRI=peek() |
+| 0x06 | none | 0xe852 | native default / no operation |
+| 0x07 | none | 0xe426 | push(PRI) |
+| 0x08 | none | 0xe43a | push(ALT) |
+| 0x09 | none | 0xe852 | native default / no operation |
+| 0x0a | none | 0xe48e | push(a==b) |
+| 0x0b | none | 0xe4b4 | push(a!=b) |
+| 0x0c | none | 0xe4de | push(signed(b)<signed(a)) |
+| 0x0d | none | 0xe504 | push(signed(b)<=signed(a)) |
+| 0x0e | none | 0xe52a | push(signed(b)>signed(a)) |
+| 0x0f | none | 0xe550 | push(signed(b)>=signed(a)) |
+| 0x10 | none | 0xe852 | native default / no operation |
+| 0x11 | none | 0xe576 | push(Boolean(a or b)) |
+| 0x12 | none | 0xe59e | push(Boolean(a and b)) |
+| 0x13 | none | 0xe5d0 | push(not pop()) |
+| 0x14 | none | 0xe852 | native default / no operation |
+| 0x15 | none | 0xe5f6 | pop1 |
+| 0x16 | none | 0xe5fa | pop2 |
+| 0x17 | none | 0xe5fe | pop3 |
+| 0x18 | none | 0xe602 | pop4 |
+| 0x19 | u16 BE | 0xe606 | pop operand cells |
+| 0x1a | u16 BE | 0xe848 | push(operand) |
+| 0x1b | u16 BE | 0xe454 | push signed low byte; push signed high byte, each extended to16 |
+| 0x1c | none | 0xe488 | duplicate top |
+| 0x1d | none | 0xe852 | native default / no operation |
+| 0x1e | u16 BE | 0xe616 | syscall(operand, argc=SYS) |
+| 0x1f | u16 BE | 0xe60e | syscall(operand>>8, argc=operand&255) |
+| 0x20 | u16 BE | 0xe60a | SYS=operand |
+| 0x21 | none | 0xe61e | push(SYS) |
+| 0x22 | none | 0xe622 | SP=BP-1; BP=stack[SP], retaining backing cells |
+| 0x23 | u16 BE | 0xe632 | push(BP+stackBase+signed16(operand)) |
+| 0x24 | none | 0xe63c | push(-pop()) |
+| 0x25 | none | 0xe64e | memory[PRI]++ |
+| 0x26 | none | 0xe668 | memory[PRI]-- |
+| 0x27 | none | 0xe852 | native default / no operation |
+| 0x28 | u16 BE | 0xe68a | relative jump |
+| 0x29 | u16 BE | 0xe68c | IP=operand (absolute) |
+| 0x2a | u16 BE | 0xe678 | pop; relative jump if nonzero |
+| 0x2b | u16 BE | 0xe692 | pop; relative jump if zero |
+| 0x2c | u16 BE | 0xe6a4 | peek; relative jump if nonzero |
+| 0x2d | u16 BE | 0xe6b0 | peek; relative jump if zero |
+| 0x2e | u16 BE | 0xe6bc | pop; relative jump if value==PRI |
+| 0x2f | none | 0xe852 | native default / no operation |
+| 0x30 | none | 0xe852 | native default / no operation |
+| 0x31 | none | 0xe852 | native default / no operation |
+| 0x32 | none | 0xe6d0 | wait/yield state |
+| 0x33 | none | 0xe6e2 | halt script |
+| 0x34 | none | 0xe852 | native default / no operation |
+| 0x35 | none | 0xe852 | native default / no operation |
+| 0x36 | none | 0xe852 | native default / no operation |
+| 0x37 | none | 0xe852 | native default / no operation |
+| 0x38 | none | 0xe852 | native default / no operation |
+| 0x39 | none | 0xe852 | native default / no operation |
+| 0x3a | none | 0xe852 | native default / no operation |
+| 0x3b | none | 0xe852 | native default / no operation |
+| 0x3c | none | 0xe852 | native default / no operation |
+| 0x3d | none | 0xe852 | native default / no operation |
+| 0x3e | none | 0xe6ea | value=pop; pointer=pop; memory[pointer]=value; push(value) |
+| 0x3f | none | 0xe718 | replace top pointer with dereferenced value |
+| 0x40 | u16 BE | 0xe734 | push(memory[operand]) |
+| 0x41 | u16 BE | 0xe72c | push(memory[BP+stackBase+signed16(operand)]) |
+| 0x42 | none | 0xe73e | push(i+1) return-address marker; commonly followed by absolute jump |
+| 0x43 | none | 0xe742 | IP=pop()+1 |
+| 0x44 | none | 0xe852 | native default / no operation |
+| 0x45 | none | 0xe852 | native default / no operation |
+| 0x46 | none | 0xe752 | SP=peek() without popping; caller controls live stack size |
+| 0x47 | none | 0xe852 | native default / no operation |
+| 0x48 | none | 0xe75c | push(BP) |
+| 0x49 | none | 0xe852 | native default / no operation |
+| 0x4a | none | 0xe760 | BP=SP |
+| 0x4b | none | 0xe852 | native default / no operation |
+| 0x4c | none | 0xe852 | native default / no operation |
+| 0x4d | none | 0xe852 | native default / no operation |
+| 0x4e | none | 0xe852 | native default / no operation |
+| 0x4f | none | 0xe852 | native default / no operation |
+| 0x50 | none | 0xe764 | push(a+b) |
+| 0x51 | none | 0xe788 | push(a-b) |
+| 0x52 | none | 0xe7a8 | push(a*b) |
+| 0x53 | none | 0xe7c8 | push(truncate(signed(a)/signed(b))) |
+| 0x54 | none | 0xe7f0 | push(signed(a)%signed(b)) |
+| 0x55 | none | 0xe852 | native default / no operation |
+| 0x56 | none | 0xe852 | native default / no operation |
+| 0x57 | none | 0xe852 | native default / no operation |
+| 0x58 | none | 0xe852 | native default / no operation |
+| 0x59 | none | 0xe852 | native default / no operation |
+| 0x5a | none | 0xe82a | push0 |
+| 0x5b | none | 0xe838 | push1 |
+| 0x5c | u16 BE | 0xe814 | if PRI==(operand&255), jump by high byte relative to i; high byte unsigned in current implementation |
+| 0x5d | none | 0xe852 | native default / no operation |
+| 0x5e | none | 0xe852 | native default / no operation |
+| 0x5f | none | 0xe83c | push(BP+stackBase+0) |
+| 0x60 | none | 0xe83c | push(BP+stackBase+1) |
+| 0x61 | none | 0xe83c | push(BP+stackBase+2) |
+| 0x62 | none | 0xe83c | push(BP+stackBase+3) |
+
+Division/remainder by zero, invalid frame pointers, uninitialized memory and library-region behavior require explicit diagnostics or further tracing; JS numeric coercion must not be mistaken for defined ARM error behavior. The replica is a research implementation, not an adversarial-bytecode sandbox.
+
+## Native save-state layout recovered so far
+
+CSKiwiEngine::saveState(0xeac8) writes: state byte; IP short; SP short; BP short; PRI short; ALT **32-bit int sign-extended from short**; SYS short; stack capacity short; capacity stack shorts (including inactive cells); then secondary+tertiary mutable data shorts (excluding primary). ALT is not serialized as a short.
+
+SHSScript save adds10 host strings, each presence Boolean followed by writeUTF when present. saveEventInfo separately writes eventText UTF,10 result shorts, then shorts from fields0x74(argc),0x76(script resource),0x78,0x7c,0x80; Booleans0x84 and0x85. Unknown fields should keep literal names until traced. UI elements and GameModel add further state.
+
+Entity table save includes200 name UTF strings, integer-property count and native raw key/value arrays, keyed integer arrays,200 expression bytes,2000 portrait bytes. Raw native arrays and stream writeInt may differ in byte order: do not assume one endian convention for the full save. CSDataStream UTF framing/encoding and whole-file/version framing still need validation. GameModel save/load decompilations are included in evidence.
+
+Browser snapshots are JSON version2 with volume fingerprint, VM backing stack/registers/cells/pending syscall, script queue, properties, arrays, names, replacements, portrait/effect state, UI, random tape/cursor, event text/results. These snapshots are NOT compatible with cod_expansion.sav or cod_options.sav. Browser media playback positions are not serialized. Native save import/export remains unfinished.
+
+## Integration approach for Claude's RenPy revival
+
+1. Keep the existing revival's artwork/UI organization. Introduce a semantic adapter keyed by numeric syscall ID; avoid copying browser DOM behavior into RenPy.
+2. Either port the small Kiwi VM and host model to Python, or translate control flow to labels while retaining all property writes, return values, conditional branches, queue order and delayed interactions. A linear dialogue transcript is insufficient.
+3. Store entity/property maps, arrays, names, expression/portrait state, location fields and event results in rollback-aware RenPy state. Preserve a pending call until the corresponding screen/menu/input returns.
+4. Resolve resources through separate bundled/expansion manifests, then map their IDs to existing revival assets. Preserve original resource ID in logs even when using a renamed file. Resolve expression and location fallbacks by actual existence.
+5. Buffer sound/music until the equivalent script-run boundary; do not immediately play every call79/80 in sequence. Use the recovered loop Boolean and explicit stop/fade duration. Record any intentional adaptation of native timing.
+6. Map normal dialogue to say, menus to screens with numeric return mapping, call8 to an image-card screen, call17/40 to input, call71 to a timer-driven action screen and call78 to a portrait-choice screen. Preserve disabled options and timeout paths.
+7. Use tools/export-trace.js with explicit action JSON to compare the revival against the replica, then compare both against original iOS/SHS capture. A replica-vs-revival match alone does not resolve native uncertainty.
+8. Treat platform-only calls9,30,87,95 and newer-version call100 as explicit integration decisions. They are never silently converted into arbitrary story progression.
+
+## Remaining work, prioritized
+
+- Capture original or SHS playback for representative dialogue, timed choices, action menus, image cards, audio switches, episode end and save/resume; compare at each syscall/wait boundary.
+- Resolve call100 against a later engine and correlate its arguments with nearby cues in later episodes.
+- Recover Objective-C/widget presentation paths: exact card a3 meaning, status icons, auxiliary dialogue text, pan/crop, menu style, animation and input gating.
+- Complete native options/volume gates, precise audio transition scheduling, native clocks and action roundPeriod.
+- Resolve model fields and platform calls, optional library ownership, unusual format strings/encoding, and whole native save framing.
+- Investigate the reproducible Secret Files recursive stack-growth path; do not enlarge the native stack silently. Both failing containers share the same script hash; each nested menu route adds caller frames before eventually returning. Original-app behavior at extreme depth has not been observed.
+
+The reference accounts for every call; it does not label unresolved semantics as finished merely because their numeric slot is known.
+
+## Validation at handoff
+
+20 focused/integration tests passed (VALIDATION_LOG.txt). Static parser:103 containers,420 script instances,368 unique hashes, zero trailing bytes. Fixed traversal:138,140 interactions,15 halted,86 interaction-limit,2 reproducible recursive-stack failures. Branch traversal:maximum400 segments per container,1,555,288 interactions,332 script instances reached, no exceptions; combined traversal reaches344/420 script instances. These synthetic explorations do not prove original-device equivalence or exhaustive branch coverage. Browser smoke check reached V3 opening/menu/chapter/narrative with original artwork (resource26001 decoded480×720) and no captured console errors. Native audio playback timing was not independently measured.
+
+RESOURCE_INDEX.json supplies actual resource IDs for all103 containers and348 decimal-named bundled files. See CLAUDE_START_HERE.md for integration boundaries and unresolved work.

@@ -1,0 +1,11 @@
+test_adapter_import_and_snapshot_replay (__main__.Integration.test_adapter_import_and_snapshot_replay) ... ok
+test_bad_container_rejected (__main__.Integration.test_bad_container_rejected) ... ok
+test_import_duplicate_is_one_episode (__main__.Integration.test_import_duplicate_is_one_episode) ... ok
+test_import_restart_and_virtual_media (__main__.Integration.test_import_restart_and_virtual_media) ... ok
+test_score_cue_uses_revival_banner (__main__.Integration.test_score_cue_uses_revival_banner) ... ok
+test_score_roundtrip_and_replay (__main__.Integration.test_score_roundtrip_and_replay) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 5.379s
+
+OK

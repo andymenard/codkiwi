@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codkiwi"
+version = "0.1.0"
+description = "A Python interpreter for the KiWi bytecode behind Cause of Death"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+keywords = ["kiwi", "exp", "cause-of-death", "bytecode", "interpreter", "visual-novel"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Games/Entertainment",
+]
+dependencies = []
+
+[tool.setuptools.packages.find]
+include = ["codkiwi*"]

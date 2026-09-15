@@ -1,0 +1,691 @@
+{
+  "native": "CoD1.3.4 ARMv7",
+  "opcodes": [
+    {
+      "raw_opcode": 1,
+      "vm_opcode": 0,
+      "handler_vmaddr": 58422,
+      "semantic": "PRI=operand",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 2,
+      "vm_opcode": 1,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 3,
+      "vm_opcode": 2,
+      "handler_vmaddr": 58410,
+      "semantic": "PRI=pop()",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 4,
+      "vm_opcode": 3,
+      "handler_vmaddr": 58436,
+      "semantic": "ALT=pop()",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 5,
+      "vm_opcode": 4,
+      "handler_vmaddr": 58430,
+      "semantic": "PRI=peek()",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 6,
+      "vm_opcode": 5,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 7,
+      "vm_opcode": 6,
+      "handler_vmaddr": 58406,
+      "semantic": "push(PRI)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 8,
+      "vm_opcode": 7,
+      "handler_vmaddr": 58426,
+      "semantic": "push(ALT)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 9,
+      "vm_opcode": 8,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 10,
+      "vm_opcode": 9,
+      "handler_vmaddr": 58510,
+      "semantic": "push(a==b)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 11,
+      "vm_opcode": 10,
+      "handler_vmaddr": 58548,
+      "semantic": "push(a!=b)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 12,
+      "vm_opcode": 11,
+      "handler_vmaddr": 58590,
+      "semantic": "push(signed(b)<signed(a))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 13,
+      "vm_opcode": 12,
+      "handler_vmaddr": 58628,
+      "semantic": "push(signed(b)<=signed(a))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 14,
+      "vm_opcode": 13,
+      "handler_vmaddr": 58666,
+      "semantic": "push(signed(b)>signed(a))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 15,
+      "vm_opcode": 14,
+      "handler_vmaddr": 58704,
+      "semantic": "push(signed(b)>=signed(a))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 16,
+      "vm_opcode": 15,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 17,
+      "vm_opcode": 16,
+      "handler_vmaddr": 58742,
+      "semantic": "push(Boolean(a or b))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 18,
+      "vm_opcode": 17,
+      "handler_vmaddr": 58782,
+      "semantic": "push(Boolean(a and b))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 19,
+      "vm_opcode": 18,
+      "handler_vmaddr": 58832,
+      "semantic": "push(not pop())",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 20,
+      "vm_opcode": 19,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 21,
+      "vm_opcode": 20,
+      "handler_vmaddr": 58870,
+      "semantic": "pop1",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 22,
+      "vm_opcode": 21,
+      "handler_vmaddr": 58874,
+      "semantic": "pop2",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 23,
+      "vm_opcode": 22,
+      "handler_vmaddr": 58878,
+      "semantic": "pop3",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 24,
+      "vm_opcode": 23,
+      "handler_vmaddr": 58882,
+      "semantic": "pop4",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 25,
+      "vm_opcode": 24,
+      "handler_vmaddr": 58886,
+      "semantic": "pop operand cells",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 26,
+      "vm_opcode": 25,
+      "handler_vmaddr": 59464,
+      "semantic": "push(operand)",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 27,
+      "vm_opcode": 26,
+      "handler_vmaddr": 58452,
+      "semantic": "push signed low byte; push signed high byte, each extended to16",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 28,
+      "vm_opcode": 27,
+      "handler_vmaddr": 58504,
+      "semantic": "duplicate top",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 29,
+      "vm_opcode": 28,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 30,
+      "vm_opcode": 29,
+      "handler_vmaddr": 58902,
+      "semantic": "syscall(operand, argc=SYS)",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 31,
+      "vm_opcode": 30,
+      "handler_vmaddr": 58894,
+      "semantic": "syscall(operand>>8, argc=operand&255)",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 32,
+      "vm_opcode": 31,
+      "handler_vmaddr": 58890,
+      "semantic": "SYS=operand",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 33,
+      "vm_opcode": 32,
+      "handler_vmaddr": 58910,
+      "semantic": "push(SYS)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 34,
+      "vm_opcode": 33,
+      "handler_vmaddr": 58914,
+      "semantic": "SP=BP-1; BP=stack[SP], retaining backing cells",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 35,
+      "vm_opcode": 34,
+      "handler_vmaddr": 58930,
+      "semantic": "push(BP+stackBase+signed16(operand))",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 36,
+      "vm_opcode": 35,
+      "handler_vmaddr": 58940,
+      "semantic": "push(-pop())",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 37,
+      "vm_opcode": 36,
+      "handler_vmaddr": 58958,
+      "semantic": "memory[PRI]++",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 38,
+      "vm_opcode": 37,
+      "handler_vmaddr": 58984,
+      "semantic": "memory[PRI]--",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 39,
+      "vm_opcode": 38,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 40,
+      "vm_opcode": 39,
+      "handler_vmaddr": 59018,
+      "semantic": "relative jump",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 41,
+      "vm_opcode": 40,
+      "handler_vmaddr": 59020,
+      "semantic": "IP=operand (absolute)",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 42,
+      "vm_opcode": 41,
+      "handler_vmaddr": 59000,
+      "semantic": "pop; relative jump if nonzero",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 43,
+      "vm_opcode": 42,
+      "handler_vmaddr": 59026,
+      "semantic": "pop; relative jump if zero",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 44,
+      "vm_opcode": 43,
+      "handler_vmaddr": 59044,
+      "semantic": "peek; relative jump if nonzero",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 45,
+      "vm_opcode": 44,
+      "handler_vmaddr": 59056,
+      "semantic": "peek; relative jump if zero",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 46,
+      "vm_opcode": 45,
+      "handler_vmaddr": 59068,
+      "semantic": "pop; relative jump if value==PRI",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 47,
+      "vm_opcode": 46,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 48,
+      "vm_opcode": 47,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 49,
+      "vm_opcode": 48,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 50,
+      "vm_opcode": 49,
+      "handler_vmaddr": 59088,
+      "semantic": "wait/yield state",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 51,
+      "vm_opcode": 50,
+      "handler_vmaddr": 59106,
+      "semantic": "halt script",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 52,
+      "vm_opcode": 51,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 53,
+      "vm_opcode": 52,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 54,
+      "vm_opcode": 53,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 55,
+      "vm_opcode": 54,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 56,
+      "vm_opcode": 55,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 57,
+      "vm_opcode": 56,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 58,
+      "vm_opcode": 57,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 59,
+      "vm_opcode": 58,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 60,
+      "vm_opcode": 59,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 61,
+      "vm_opcode": 60,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 62,
+      "vm_opcode": 61,
+      "handler_vmaddr": 59114,
+      "semantic": "value=pop; pointer=pop; memory[pointer]=value; push(value)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 63,
+      "vm_opcode": 62,
+      "handler_vmaddr": 59160,
+      "semantic": "replace top pointer with dereferenced value",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 64,
+      "vm_opcode": 63,
+      "handler_vmaddr": 59188,
+      "semantic": "push(memory[operand])",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 65,
+      "vm_opcode": 64,
+      "handler_vmaddr": 59180,
+      "semantic": "push(memory[BP+stackBase+signed16(operand)])",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 66,
+      "vm_opcode": 65,
+      "handler_vmaddr": 59198,
+      "semantic": "push(i+1) return-address marker; commonly followed by absolute jump",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 67,
+      "vm_opcode": 66,
+      "handler_vmaddr": 59202,
+      "semantic": "IP=pop()+1",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 68,
+      "vm_opcode": 67,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 69,
+      "vm_opcode": 68,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 70,
+      "vm_opcode": 69,
+      "handler_vmaddr": 59218,
+      "semantic": "SP=peek() without popping; caller controls live stack size",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 71,
+      "vm_opcode": 70,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 72,
+      "vm_opcode": 71,
+      "handler_vmaddr": 59228,
+      "semantic": "push(BP)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 73,
+      "vm_opcode": 72,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 74,
+      "vm_opcode": 73,
+      "handler_vmaddr": 59232,
+      "semantic": "BP=SP",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 75,
+      "vm_opcode": 74,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 76,
+      "vm_opcode": 75,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 77,
+      "vm_opcode": 76,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 78,
+      "vm_opcode": 77,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 79,
+      "vm_opcode": 78,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 80,
+      "vm_opcode": 79,
+      "handler_vmaddr": 59236,
+      "semantic": "push(a+b)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 81,
+      "vm_opcode": 80,
+      "handler_vmaddr": 59272,
+      "semantic": "push(a-b)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 82,
+      "vm_opcode": 81,
+      "handler_vmaddr": 59304,
+      "semantic": "push(a*b)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 83,
+      "vm_opcode": 82,
+      "handler_vmaddr": 59336,
+      "semantic": "push(truncate(signed(a)/signed(b)))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 84,
+      "vm_opcode": 83,
+      "handler_vmaddr": 59376,
+      "semantic": "push(signed(a)%signed(b))",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 85,
+      "vm_opcode": 84,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 86,
+      "vm_opcode": 85,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 87,
+      "vm_opcode": 86,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 88,
+      "vm_opcode": 87,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 89,
+      "vm_opcode": 88,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 90,
+      "vm_opcode": 89,
+      "handler_vmaddr": 59434,
+      "semantic": "push0",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 91,
+      "vm_opcode": 90,
+      "handler_vmaddr": 59448,
+      "semantic": "push1",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 92,
+      "vm_opcode": 91,
+      "handler_vmaddr": 59412,
+      "semantic": "if PRI==(operand&255), jump by high byte relative to i; high byte unsigned in current implementation",
+      "hasOperand": true
+    },
+    {
+      "raw_opcode": 93,
+      "vm_opcode": 92,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 94,
+      "vm_opcode": 93,
+      "handler_vmaddr": 59474,
+      "semantic": "native default / no operation",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 95,
+      "vm_opcode": 94,
+      "handler_vmaddr": 59452,
+      "semantic": "push(BP+stackBase+0)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 96,
+      "vm_opcode": 95,
+      "handler_vmaddr": 59452,
+      "semantic": "push(BP+stackBase+1)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 97,
+      "vm_opcode": 96,
+      "handler_vmaddr": 59452,
+      "semantic": "push(BP+stackBase+2)",
+      "hasOperand": false
+    },
+    {
+      "raw_opcode": 98,
+      "vm_opcode": 97,
+      "handler_vmaddr": 59452,
+      "semantic": "push(BP+stackBase+3)",
+      "hasOperand": false
+    }
+  ]
+}

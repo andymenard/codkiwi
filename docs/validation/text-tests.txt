@@ -1,0 +1,9 @@
+test_emphasis_stays_balanced_across_pages (__main__.TextTests.test_emphasis_stays_balanced_across_pages) ... ok
+test_empty (__main__.TextTests.test_empty) ... ok
+test_long_word_is_not_dropped (__main__.TextTests.test_long_word_is_not_dropped) ... ok
+test_short_line_unchanged (__main__.TextTests.test_short_line_unchanged) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.000s
+
+OK

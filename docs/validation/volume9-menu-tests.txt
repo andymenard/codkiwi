@@ -1,0 +1,6 @@
+test_volume9_actor_menu_and_timeout (__main__.MenuTests.test_volume9_actor_menu_and_timeout) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.277s
+
+OK

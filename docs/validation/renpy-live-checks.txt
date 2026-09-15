@@ -1,0 +1,27 @@
+RenPy 8.5.3.26051504; SDK project launch, no standalone app required.
+Tested 2026-09-13 using a temporary project copy.
+
+PASS: in-game file picker imported untouched Volume_2.exp and began execution.
+PASS: chapter card displayed Chapter One / Tough Love with original background.
+PASS: compared handmade Volume 2 Chapter 1 card and first Sandi dialogue visually.
+PASS: corrected centered background, portrait anchors, main text offset, circular framing.
+PASS: existing choice screen rendered original start/chapter-selection prompts.
+PASS: selected chapter groups and displayed original chapter entries; disabled entries respected.
+PASS: existing timedChoice screen showed original Beg!/Run! menu and countdown; timeout reached "You stand frozen in place!".
+PASS: original call 88 displayed the existing Detective Score Up! banner.
+PASS: actual VM property 0:2002 increased from 0 to 1.
+PASS: RenPy rollback returned to prior dialogue and property 0:2002 == 0.
+PASS: clean RenPy save/load restored scoring dialogue and property 0:2002 == 1.
+
+Initial save test failed because a temporary fixture's file handle was left in RenPy store.
+The fixture was corrected and a fresh test passed. Production interpreter modules hold file handles only in local function scope.
+
+These are representative integration checks, not complete original-iPhone fidelity or exhaustive route coverage.
+
+Volume 9 Chapter 1 regression (2026-09-13):
+PASS: original Run away! / Attack him! menu, syscall 1, duration 3500.
+FIX: argument 5 is actor 15; resolve its portrait map to image 26010, not bundled resource 15.
+FIX: timedChoice uses SetLocalVariable for its local remaining counter when embedded via use.
+PASS: live portrait rendered correctly, bar visibly partially depleted, then original timeout dialogue appeared ("...You hesitate, frozen in fear!").
+PASS: replay after rollback showed the corrected portrait and decreasing bar.
+PASS: automated test covers PNG resolution, rejecting non-image resource 15, old-view compatibility, 3500->2500 elapsed state, and timeout.
